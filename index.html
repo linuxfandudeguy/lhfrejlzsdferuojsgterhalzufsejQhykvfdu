@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Random Trivia</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        #trivia-container {
+            margin-top: 20px;
+        }
+        .trivia-item {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="my-4">Random Trivia Generator</h1>
+        <button id="fetch-trivia" class="btn btn-primary mb-4">Get Random Trivia</button>
+        <div id="trivia-container"></div>
+        <div class="form-group mt-4">
+            <input type="text" id="user-answer" class="form-control" placeholder="Enter your answer">
+            <button id="check-answer" class="btn btn-success mt-2">Check</button>
+        </div>
+        <div id="result-container" class="mt-4"></div>
+    </div>
+
+    <noscript>
+        <div class="alert alert-danger" role="alert">
+            JavaScript is disabled in your browser. Please enable JavaScript to use this application.
+        </div>
+    </noscript>
+
+    <script>
+        const apiKey = 'jtci8rOBmaxHp0/eSBDx3A==tGlVzjfUOQbeJTJc'; // Your API key
+        const categories = [
+            'artliterature', 'language', 'sciencenature', 'general',
+            'fooddrink', 'peopleplaces', 'geography', 'historyholidays',
+            'entertainment', 'toysgames', 'music', 'mathematics',
+            'religionmythology', 'sportsleisure'
+        ];
+        let currentAnswer = '';
+
+        document.getElementById('fetch-trivia').addEventListener('click', function() {
+            const randomCategory = categories[Math.floor(Math.random() * categories.length)];
+            fetchTrivia(randomCategory);
+        });
+
+        document.getElementById('check-answer').addEventListener('click', function() {
+            const userAnswer = document.getElementById('user-answer').value.trim().toLowerCase();
+            const resultContainer = document.getElementById('result-container');
+            if (userAnswer === currentAnswer.toLowerCase()) {
+                resultContainer.innerHTML = '<div class="alert alert-success" role="alert">Correct!</div>';
+            } else {
+                resultContainer.innerHTML = `<div class="alert alert-danger" role="alert">Incorrect! The correct answer was: ${currentAnswer}</div>`;
+            }
+        });
+
+        function fetchTrivia(category) {
+            console.log(`Fetching trivia for category: ${category}`);
+            fetch(`https://api.api-ninjas.com/v1/trivia?category=${encodeURIComponent(category)}`, {
+                method: 'GET',
+                headers: {
+                    'X-Api-Key': apiKey,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Fetched data:', data);
+                displayTrivia(data);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+
+        function displayTrivia(trivia) {
+            const triviaContainer = document.getElementById('trivia-container');
+            triviaContainer.innerHTML = '';
+
+            if (!Array.isArray(trivia) || trivia.length === 0) {
+                triviaContainer.textContent = 'No trivia found for this category.';
+                return;
+            }
+
+            const item = trivia[0]; // Assuming we get at least one trivia question
+            currentAnswer = item.answer; // Store the answer for checking
+            const question = item.question.endsWith('?') ? item.question : `${item.question}?`; // Ensure the question ends with a ?
+
+            const triviaItem = document.createElement('div');
+            triviaItem.classList.add('trivia-item');
+            triviaItem.innerHTML = `
+                <h2>Category: ${item.category}</h2>
+                <p><strong>Question:</strong> ${question}</p>
+            `;
+            triviaContainer.appendChild(triviaItem);
+        }
+
+        function isBrowserOutdated() {
+            const outdatedBrowser = !(
+                'fetch' in window &&
+                'Promise' in window &&
+                'assign' in Object
+            );
+
+            if (outdatedBrowser) {
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-warning';
+                alertDiv.role = 'alert';
+                alertDiv.innerText = 'Your browser is outdated. Please update your browser for the best experience.';
+                document.body.prepend(alertDiv);
+            }
+        }
+
+        // Check if the browser is outdated on page load
+        window.onload = isBrowserOutdated;
+    </script>
+</body>
+</html>
